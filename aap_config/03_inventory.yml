@@ -4,9 +4,9 @@
   gather_facts: false
   module_defaults:
     group/ansible.controller.controller:
-      controller_host: "{{ aap_hostname }}"
-      controller_username: "{{ aap_username }}"
-      controller_password: "{{ aap_password }}"
+      controller_host: "{{ host }}"
+      controller_username: "{{ username }}"
+      controller_password: "{{ password }}"
       validate_certs: "{{ aap_validate_certs | default(false) }}"
   vars:
     aap_org: "{{ aap_organization | default('Red Hat network organization') }}"
