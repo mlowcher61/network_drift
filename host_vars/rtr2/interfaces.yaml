@@ -1,0 +1,12 @@
+interfaces:
+-   name: Ethernet1
+    enabled: true
+    mode: layer3
+-   name: Loopback0
+    enabled: true
+-   name: Tunnel0
+    enabled: true
+    mtu: 1394
+-   name: Tunnel1
+    enabled: true
+    

@@ -1,0 +1,18 @@
+---
+- name: Getting ready to apply fixes
+  hosts: routers
+  gather_facts: false
+  vars:
+   resource: 
+     - ntp_global
+     - logging_global
+     - snmp_server
+
+  tasks:
+    - name: Remediating found drifts
+      ansible.builtin.include_role:
+        name: "roles/{{ role_item }}"
+      loop: "{{ resource }}"
+      loop_control:
+        loop_var: role_item
+...

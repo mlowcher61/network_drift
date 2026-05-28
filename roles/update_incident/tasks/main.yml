@@ -1,0 +1,30 @@
+---
+- name: Stuff we are always going to do
+  tags:
+    - always
+  block:
+
+    - name: Retrieve requested item incident sysid for each ticket
+      register: result
+      servicenow.itsm.api_info:
+        resource: incident
+        sysparm_query: "numberSTARTSWITH{{ ntp_incident_ticket_number }}"
+        # ntp_incident_ticket_number worked! But I need it to be incident_ticket_number
+
+    - name: Print the result
+      ansible.builtin.debug:
+        var: result
+
+    - name: Update the incident item work notes and state in ServiceNow
+      servicenow.itsm.api:
+        action: patch
+        resource: incident
+        sys_id: "{{ result.record[0].sys_id }}"
+        data:
+          close_code: "{{ update_incident_close_code | default(omit) }}"
+          close_notes: "{{ update_incident_close_notes | default(omit) }}"
+          incident_state: "{{ update_incident_incident_state | default(omit) }}"
+
+    - name: Print out hostvars
+      ansible.builtin.debug:
+        var: hostvars[inventory_hostname]

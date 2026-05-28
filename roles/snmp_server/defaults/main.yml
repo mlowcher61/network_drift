@@ -1,0 +1,18 @@
+---
+update_incident_close_notes: |-
+  The following command was run to resolve the snmp issue: {{ snmp_diff.commands }}
+
+  ServiceNow incident number: {{ snmp_incident_ticket_number }}
+
+  Ansible Job ID: {{ tower_job_id }}
+
+update_incident_incident_state: 6
+
+
+update_incident_close_code: "Solved Remotely (Permanently)"
+#
+# Variable set at the workflow template
+# ticket_number: ''
+#
+# Credential Types needed for this role
+# ServiceNow ITSM Credential - This is a Custom Credential 

@@ -1,0 +1,67 @@
+---
+- name: Check logging_global configuration
+  ansible.netcommon.network_resource:
+    config: "{{ hostvars[inventory_hostname]['logging_global'] }}"   
+    os_name: "{{ hostvars[inventory_hostname]['ansible_network_os'] }}"
+    name: logging_global
+    state: "{{ state }}"
+  register: logging_global_diff
+  check_mode: "{{ check_mode }}"
+
+# - name: Display Drift Results
+#   ansible.builtin.debug:
+#     var: ntp_diff  # ntp_diff.results
+
+- ansible.utils.fact_diff:
+    before: "{{ logging_global_diff.before }}"
+    after: "{{ hostvars[inventory_hostname]['logging_global'] }}"
+  diff: "{{ diffs }}"
+  delegate_to: localhost
+  when: diffs == true
+
+- name: if logging_global drift found, open a servicenow ticket
+  ansible.builtin.debug:
+    msg: "Logging Global configuration drift detected on {{ inventory_hostname }}. Please investigate. Servicenow incident ticket has been created AND there will be hell to pay! The AAP job is is {{ tower_job_id }}"
+  when: logging_global_diff.changed
+  tags:
+    - drift_alert
+
+- name: create servicenow ticket for logging_global drift
+  register: create_logging_incident 
+  servicenow.itsm.incident:
+    caller: "service.ansible"
+    state: new
+    short_description: "Logging Global configuration drift detected on {{ inventory_hostname }}"
+    description: "The Logging Global configuration on device {{ inventory_hostname }} has drifted from the desired state. Please investigate and remediate as necessary. The AAP job is is {{ tower_job_id }}" 
+    urgency: medium
+    impact: medium
+    other:
+      assignment_group: "Ansible West Tigers"
+  when: logging_global_diff.changed
+  tags:
+    - drift_alert
+  delegate_to: localhost
+
+# - name: Print logging_global incident results
+#   ansible.builtin.debug:
+#     var: create_logging_incident
+#   when: logging_global_diff.changed
+#   tags:
+#     - drift_alert
+
+- name: Print created logging_global incident ticket number
+  ansible.builtin.debug:
+    msg: "The incident ticket number is {{ create_logging_incident.record.number }}"
+  when: logging_global_diff.changed
+  tags:
+    - drift_alert
+
+- name: Set Logging Global incident ticket number stat
+  ansible.builtin.set_stats:
+    data:
+      logging_incident_ticket_number: "{{ create_logging_incident.record.number }}"
+      logging_incident_sys_id: "{{ create_logging_incident.record.sys_id }}"
+      per_host: false   # optional: make it a single stat for the whole play
+  when: logging_global_diff.changed
+  tags:
+    - drift_alert

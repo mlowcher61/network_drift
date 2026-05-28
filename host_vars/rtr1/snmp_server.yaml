@@ -1,0 +1,20 @@
+snmp_server:
+    groups:
+    -   group: V3GROUP
+        version: v3
+        version_option: noauth
+    -   group: V3USER
+        version: v3
+        version_option: noauth
+    hosts:
+    -   community_string: V3USER
+        host: 1.1.1.1
+        version: '3'
+        version_option: noauth
+    users:
+    -   group: V3GROUP
+        username: V3USER
+        version: v3
+    -   group: V3GROUP
+        username: V3USER
+        version: v3

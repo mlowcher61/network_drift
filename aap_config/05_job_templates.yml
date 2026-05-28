@@ -1,0 +1,66 @@
+---
+- name: Create job templates
+  hosts: localhost
+  gather_facts: false
+  module_defaults:
+    group/ansible.platform.controller:
+      controller_host: "{{ aap_hostname }}"
+      controller_username: "{{ aap_username }}"
+      controller_password: "{{ aap_password }}"
+      validate_certs: "{{ aap_validate_certs | default(false) }}"
+  vars:
+    aap_org: "{{ aap_organization | default('Red Hat network organization') }}"
+  tasks:
+    - name: JT — Drift detect
+      ansible.platform.job_template:
+        name: Drift detect
+        organization: "{{ aap_org }}"
+        project: network_drift
+        inventory: Network Drift Inventory
+        playbook: drift.yml
+        execution_environment: network_drift_ee
+        credentials:
+          - Workshop Credential
+          - cred_servicenow
+        job_tags: ""
+        skip_tags: patch
+        extra_vars:
+          check_mode: true
+          state: overridden
+          diffs: true
+
+    - name: JT — Push Config
+      ansible.platform.job_template:
+        name: Push Config
+        organization: "{{ aap_org }}"
+        project: network_drift
+        inventory: Network Drift Inventory
+        playbook: push_config.yml
+        execution_environment: network_drift_ee
+        credentials:
+          - Workshop Credential
+          - cred_servicenow
+        job_tags: ""
+        skip_tags: drift_alert
+        extra_vars:
+          check_mode: false
+          state: overridden
+          diffs: false
+
+    - name: JT — Apply initial config to devices
+      ansible.platform.job_template:
+        name: Apply initial config to devices
+        organization: "{{ aap_org }}"
+        project: network_drift
+        inventory: Network Drift Inventory
+        playbook: push_config.yml
+        execution_environment: network_drift_ee
+        credentials:
+          - Workshop Credential
+          - cred_servicenow
+        job_tags: ""
+        skip_tags: update_incident
+        extra_vars:
+          check_mode: false
+          state: overridden
+          diffs: false

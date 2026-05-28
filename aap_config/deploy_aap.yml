@@ -1,0 +1,11 @@
+---
+# Deploys all AAP objects for the Network Drift demo, in order. Idempotent.
+# Required extra-vars: aap_hostname, aap_username, aap_password
+#   ansible-playbook aap_config/deploy_aap.yml \
+#     -e aap_hostname=aap.example.com -e aap_username=admin -e aap_password=...
+- import_playbook: 00_credential_types.yml
+- import_playbook: 01_credentials.yml
+- import_playbook: 02_project.yml
+- import_playbook: 03_inventory.yml
+- import_playbook: 04_execution_environment.yml
+- import_playbook: 05_job_templates.yml

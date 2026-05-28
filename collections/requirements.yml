@@ -1,0 +1,16 @@
+---
+# Certified / Validated content (Red Hat preferred per standards).
+collections:
+  # Certified — Red Hat. Used by aap_config/ config-as-code playbooks.
+  - name: ansible.platform
+    version: ">=2.5.0"
+  # Certified networking content.
+  - name: ansible.netcommon
+  - name: ansible.utils
+  - name: cisco.ios
+  - name: arista.eos
+  - name: junipernetworks.junos
+  # Certified ITSM integration.
+  - name: servicenow.itsm
+  # Community general utilities used by demo roles.
+  - name: community.general

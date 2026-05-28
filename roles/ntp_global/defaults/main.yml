@@ -1,0 +1,12 @@
+---
+update_incident_close_notes: |-
+  The following command was run to resolve the ntp issue: {{ ntp_diff.commands }}
+
+  ServiceNow incident number: {{ ntp_incident_ticket_number }}
+
+  Ansible Job ID: {{ tower_job_id }}
+
+update_incident_incident_state: 6
+
+
+update_incident_close_code: "Solved Remotely (Permanently)"

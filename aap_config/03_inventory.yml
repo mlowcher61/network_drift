@@ -1,0 +1,52 @@
+---
+- name: Create AAP inventory by cloning Workshop Inventory
+  hosts: localhost
+  gather_facts: false
+  module_defaults:
+    group/ansible.platform.controller:
+      controller_host: "{{ aap_hostname }}"
+      controller_username: "{{ aap_username }}"
+      controller_password: "{{ aap_password }}"
+      validate_certs: "{{ aap_validate_certs | default(false) }}"
+  vars:
+    aap_org: "{{ aap_organization | default('Red Hat network organization') }}"
+    source_inventory: "{{ source_inventory_name | default('Workshop Inventory') }}"
+    new_inventory: Network Drift Inventory
+  tasks:
+    - name: Clone Workshop Inventory into Network Drift Inventory
+      ansible.platform.inventory:
+        name: "{{ new_inventory }}"
+        organization: "{{ aap_org }}"
+        copy_from: "{{ source_inventory }}"
+
+    - name: Add localhost host
+      ansible.platform.host:
+        name: localhost
+        inventory: "{{ new_inventory }}"
+        organization: "{{ aap_org }}"
+        description: ansible controller itself
+        variables:
+          ansible_host: 127.0.0.1
+          ansible_connection: local
+
+    - name: Set network group variables
+      ansible.platform.group:
+        name: "{{ item.group_name }}"
+        inventory: "{{ new_inventory }}"
+        organization: "{{ aap_org }}"
+        variables: "{{ item.variables }}"
+      loop:
+        - group_name: cisco
+          variables:
+            ansible_network_os: cisco.ios.ios
+            ansible_connection: network_cli
+        - group_name: arista
+          variables:
+            ansible_network_os: arista.eos.eos
+            ansible_connection: network_cli
+            ansible_become: true
+            ansible_become_method: enable
+        - group_name: juniper
+          variables:
+            ansible_network_os: junipernetworks.junos.junos
+            ansible_connection: netconf

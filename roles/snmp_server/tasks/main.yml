@@ -1,0 +1,121 @@
+---
+- name: Check snmp configuration
+  ansible.netcommon.network_resource:
+    config: "{{ hostvars[inventory_hostname]['snmp_server'] }}"   
+    os_name: "{{ hostvars[inventory_hostname]['ansible_network_os'] }}"
+    name: snmp_server
+    state: "{{ state }}"
+  register: snmp_diff
+  check_mode: "{{ check_mode }}"
+
+# - name: Display Drift Results
+#   ansible.builtin.debug:
+#     var: snmp_diff  # snmp_diff.results
+
+- ansible.utils.fact_diff:
+    before: "{{ snmp_diff.before }}"
+    after: "{{ hostvars[inventory_hostname]['snmp_server'] }}"
+  diff: "{{ diffs }}"
+  delegate_to: localhost
+  when: diffs == true
+
+- name: if snmp drift found, open a servicenow ticket
+  ansible.builtin.debug:
+    msg: "snmp Global configuration drift detected on {{ inventory_hostname }}. Please investigate. Servicenow incident ticket has been created AND there will be hell to pay! The AAP job is is {{ tower_job_id }}"
+  when: snmp_diff.changed
+  tags:
+    - drift_alert
+    - update_incident
+
+- name: create servicenow ticket for snmp drift
+  register: snmp_incident 
+  servicenow.itsm.incident:
+    caller: "service.ansible"
+    state: new
+    short_description: "snmp Global configuration drift detected on {{ inventory_hostname }}"
+    description: "The snmp Global configuration on device {{ inventory_hostname }} has drifted from the desired state. Please investigate and remediate as necessary. The AAP job is is {{ tower_job_id }}" 
+    urgency: medium
+    impact: medium
+    other:
+      assignment_group: "Ansible West Tigers"
+  when: snmp_diff.changed
+  tags:
+    - drift_alert
+    - update_incident
+  delegate_to: localhost
+
+# - name: Print snmp incident results
+#   ansible.builtin.debug:
+#     var: snmp_incident
+#   when: snmp_diff.changed
+#   tags:
+#     - drift_alert
+
+- name: Print created snmp incident ticket number
+  ansible.builtin.debug:
+    msg: "The incident ticket number is {{ snmp_incident.record.number }}"
+  when: snmp_diff.changed
+  tags:
+    - drift_alert
+    - update_incident
+
+- name: Set snmp incident ticket number stat and sys_id
+  register: snmp_incident_stats
+  ansible.builtin.set_stats:
+    data:
+      snmp_incident_ticket_number: "{{ snmp_incident.record.number }}"
+      snmp_incident_sys_id: "{{ snmp_incident.record.sys_id }}"
+      per_host: false   # optional: make it a single stat for the whole play
+  when: snmp_diff.changed
+  tags:
+    - drift_alert
+    - update_incident
+
+- name: Print snmp incident stats!!!!!!!!!!!!!!!!!!
+  ansible.builtin.debug:
+    msg: "The sys_id is {{ snmp_incident_stats.ansible_stats.data.snmp_incident_sys_id }}"
+  when: snmp_diff.changed
+  tags:
+    - drift_alert
+    - update_incident
+
+- name: Runs when updating an incident
+  tags:
+    - always
+  block:
+
+    # - name: Retrieve requested item incident sysid for each ticket
+    #   when: snmp_diff.changed
+    #   register: result
+    #   servicenow.itsm.api_info:
+    #     resource: incident
+    #     sysparm_query: "numberSTARTSWITH{{ snmp_incident_ticket_number }}"
+
+    # - name: Print the result
+    #   when: snmp_diff.changed
+    #   ansible.builtin.debug:
+    #     var: result
+
+    - name: Update the incident item work notes and state in ServiceNow
+      register: update_snmp_incident
+      when: snmp_diff.changed
+      tags:
+        - patch 
+        - update_incident
+      servicenow.itsm.api:
+        action: patch
+        resource: incident
+        sys_id:  "{{ snmp_incident_sys_id }}" #"{{ result.record[0].sys_id }}"
+        data:
+          close_code: "{{ update_incident_close_code | default(omit) }}"
+          close_notes: "{{ update_incident_close_notes | default(omit) }}"
+          incident_state: "{{ update_incident_incident_state | default(omit) }}"
+
+    - name: Print update_snmp_incident
+      ansible.builtin.debug:
+        var: update_snmp_incident
+      when: snmp_diff.changed
+      tags:
+        - patch
+        - update_incident
+# Update the snmp incident with work notes and change state to resolved/closed

@@ -1,0 +1,11 @@
+interfaces:
+-   name: GigabitEthernet1
+    enabled: true
+-   name: Loopback0
+    enabled: true
+-   name: Tunnel0
+    enabled: true
+-   name: Tunnel1
+    enabled: true
+-   name: VirtualPortGroup0
+    enabled: true

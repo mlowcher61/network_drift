@@ -1,0 +1,9 @@
+ospf_interfaces:
+-   name: Ethernet1
+-   name: Loopback0
+-   address_family:
+    -   afi: ipv4
+        area:
+            area_id: 0.0.0.0
+        network: point-to-point
+    name: Tunnel0

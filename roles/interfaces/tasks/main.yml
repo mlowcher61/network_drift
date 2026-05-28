@@ -1,0 +1,20 @@
+---
+- name: Check Interfaces configuration
+  ansible.netcommon.network_resource:
+    config: "{{ hostvars[inventory_hostname]['interfaces'] }}"
+    os_name: "{{ hostvars[inventory_hostname] ['ansible_network_os'] }}"
+    name: interfaces
+    state: "{{ state }}"
+  register: interfaces_diff
+  check_mode: "{{ check_mode }}"
+
+- ansible.utils.fact_diff:
+    before: "{{ interfaces_diff }}" # Removed .before at the end
+    after: "{{ hostvars[inventory_hostname]['interfaces'] }}"
+  diff: "{{ diffs }}"
+  delegate_to: localhost
+  when: diffs == true
+
+
+ 
+

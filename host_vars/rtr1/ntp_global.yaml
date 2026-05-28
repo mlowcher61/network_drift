@@ -1,0 +1,6 @@
+ntp_global:
+    servers:
+    -   server: 192.0.2.0
+        version: 2
+    -   server: 192.0.2.1
+        version: 2
