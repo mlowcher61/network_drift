@@ -13,7 +13,7 @@
       ansible.controller.project:
         name: network_drift
         description: Network configuration drift detection and remediation
-        organization: "{{ aap_organization | default('Default') }}"
+        organization: "{{ aap_organization | default('Red Hat network organization') }}"
         scm_type: git
         scm_url: "{{ project_scm_url | default('https://github.com/mlowcher61/network_drift.git') }}"
         scm_branch: main
