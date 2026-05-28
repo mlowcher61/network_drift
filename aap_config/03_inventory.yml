@@ -23,7 +23,7 @@
       ansible.controller.host:
         name: localhost
         inventory: "{{ new_inventory }}"
-        organization: "{{ aap_org }}"
+        # organization: "{{ aap_org }}"
         description: ansible controller itself
         variables:
           ansible_host: 127.0.0.1
