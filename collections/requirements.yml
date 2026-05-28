@@ -2,8 +2,13 @@
 # Certified / Validated content (Red Hat preferred per standards).
 collections:
   # Certified — Red Hat. Used by aap_config/ config-as-code playbooks.
+  # ansible.platform manages gateway objects (orgs, teams, users, tokens).
   - name: ansible.platform
     version: ">=2.5.0"
+  # ansible.controller manages Automation Controller objects (credentials,
+  # projects, inventories, EEs, job templates) used by the aap_config/ playbooks.
+  - name: ansible.controller
+    version: ">=4.5.0"
   # Certified networking content.
   - name: ansible.netcommon
   - name: ansible.utils

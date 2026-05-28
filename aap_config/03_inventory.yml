@@ -3,7 +3,7 @@
   hosts: localhost
   gather_facts: false
   module_defaults:
-    group/ansible.platform.controller:
+    group/ansible.controller.controller:
       controller_host: "{{ aap_hostname }}"
       controller_username: "{{ aap_username }}"
       controller_password: "{{ aap_password }}"
@@ -14,13 +14,13 @@
     new_inventory: Network Drift Inventory
   tasks:
     - name: Clone Workshop Inventory into Network Drift Inventory
-      ansible.platform.inventory:
+      ansible.controller.inventory:
         name: "{{ new_inventory }}"
         organization: "{{ aap_org }}"
         copy_from: "{{ source_inventory }}"
 
     - name: Add localhost host
-      ansible.platform.host:
+      ansible.controller.host:
         name: localhost
         inventory: "{{ new_inventory }}"
         organization: "{{ aap_org }}"
@@ -30,7 +30,7 @@
           ansible_connection: local
 
     - name: Set network group variables
-      ansible.platform.group:
+      ansible.controller.group:
         name: "{{ item.group_name }}"
         inventory: "{{ new_inventory }}"
         organization: "{{ aap_org }}"

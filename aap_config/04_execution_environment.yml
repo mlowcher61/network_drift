@@ -3,14 +3,14 @@
   hosts: localhost
   gather_facts: false
   module_defaults:
-    group/ansible.platform.controller:
+    group/ansible.controller.controller:
       controller_host: "{{ aap_hostname }}"
       controller_username: "{{ aap_username }}"
       controller_password: "{{ aap_password }}"
       validate_certs: "{{ aap_validate_certs | default(false) }}"
   tasks:
     - name: network_drift_ee
-      ansible.platform.execution_environment:
+      ansible.controller.execution_environment:
         name: network_drift_ee
         image: "{{ network_drift_ee_image | default('quay.io/locust61/network-ee:02') }}"
         organization: "{{ aap_organization | default('Red Hat network organization') }}"

@@ -3,7 +3,7 @@
   hosts: localhost
   gather_facts: false
   module_defaults:
-    group/ansible.platform.controller:
+    group/ansible.controller.controller:
       controller_host: "{{ aap_hostname }}"
       controller_username: "{{ aap_username }}"
       controller_password: "{{ aap_password }}"
@@ -12,7 +12,7 @@
     aap_org: "{{ aap_organization | default('Red Hat network organization') }}"
   tasks:
     - name: JT — Drift detect
-      ansible.platform.job_template:
+      ansible.controller.job_template:
         name: Drift detect
         organization: "{{ aap_org }}"
         project: network_drift
@@ -30,7 +30,7 @@
           diffs: true
 
     - name: JT — Push Config
-      ansible.platform.job_template:
+      ansible.controller.job_template:
         name: Push Config
         organization: "{{ aap_org }}"
         project: network_drift
@@ -48,7 +48,7 @@
           diffs: false
 
     - name: JT — Apply initial config to devices
-      ansible.platform.job_template:
+      ansible.controller.job_template:
         name: Apply initial config to devices
         organization: "{{ aap_org }}"
         project: network_drift
