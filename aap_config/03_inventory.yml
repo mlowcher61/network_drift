@@ -33,7 +33,7 @@
       ansible.controller.group:
         name: "{{ item.group_name }}"
         inventory: "{{ new_inventory }}"
-        organization: "{{ aap_org }}"
+        # organization: "{{ aap_org }}"
         variables: "{{ item.variables }}"
       loop:
         - group_name: cisco
