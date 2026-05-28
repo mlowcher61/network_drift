@@ -5,7 +5,7 @@
 #     -e aap_hostname=aap.example.com -e aap_username=admin -e aap_password=...
 - import_playbook: 00_credential_types.yml
 - import_playbook: 01_credentials.yml
-- import_playbook: 02_project.yml
+# - import_playbook: 02_project.yml # project already created manually to link to SCM
 - import_playbook: 03_inventory.yml
 - import_playbook: 04_execution_environment.yml
 - import_playbook: 05_job_templates.yml

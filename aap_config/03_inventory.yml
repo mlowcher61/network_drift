@@ -2,12 +2,7 @@
 - name: Create AAP inventory by cloning Workshop Inventory
   hosts: localhost
   gather_facts: false
-  # module_defaults:
-  #   group/ansible.controller.controller:
-  #     controller_host: "{{ host }}"
-  #     controller_username: "{{ username }}"
-  #     controller_password: "{{ password }}"
-  #     validate_certs: "{{ aap_validate_certs | default(false) }}"
+  
   vars:
     aap_org: "{{ aap_organization | default('Red Hat network organization') }}"
     source_inventory: "{{ source_inventory_name | default('Workshop Inventory') }}"
@@ -23,7 +18,6 @@
       ansible.controller.host:
         name: localhost
         inventory: "{{ new_inventory }}"
-        # organization: "{{ aap_org }}"
         description: ansible controller itself
         variables:
           ansible_host: 127.0.0.1
@@ -33,7 +27,6 @@
       ansible.controller.group:
         name: "{{ item.group_name }}"
         inventory: "{{ new_inventory }}"
-        # organization: "{{ aap_org }}"
         variables: "{{ item.variables }}"
       loop:
         - group_name: cisco
