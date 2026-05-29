@@ -62,18 +62,12 @@ network_drift/
 
 ## Day-0 — Deploy AAP objects (config-as-code)
 
+Full step-by-step setup instructions live in
+**[`aap_config/README.md`](aap_config/README.md)** — follow that guide to stand
+up the solution in AAP.
+
 The `aap_config/` playbooks are idempotent — rerun any time to reconcile drift
-in AAP itself.
-
-```bash
-ansible-playbook aap_config/deploy_aap.yml \
-  -e aap_hostname=aap.example.com \
-  -e aap_username=admin \
-  -e aap_password='********' \
-  -e aap_organization='Red Hat network organization'
-```
-
-What you get:
+in AAP itself. What the bootstrap creates:
 
 | Object | Name |
 |---|---|
@@ -83,16 +77,7 @@ What you get:
 | Inventory | `Network Drift Inventory` (clone of Workshop Inventory) |
 | Execution environment | `network_drift_ee` (`quay.io/locust61/network-ee:02`) |
 | Job templates | `Drift detect`, `Push Config`, `Apply initial config to devices` |
-
-### After first deploy
-
-1. **Fill in `cred_servicenow`** in the AAP UI: set `SN_HOST`, `SN_USERNAME`,
-   `SN_PASSWORD`. The playbook only creates the shell — secrets never live in
-   this repo.
-2. Run **`Apply initial config to devices`** once to push the source of truth
-   from `host_vars/` to every router.
-3. Manually create a **workflow template** wiring `Drift detect` → approval
-   node → `Push Config`.
+| Workflow template | `Network Drift and Remediation workflow` |
 
 ---
 
