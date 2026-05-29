@@ -8,7 +8,7 @@
   tasks:
     - name: WT — Network drift detect and remediate
       ansible.controller.workflow_job_template:
-        name: 06_workflow_template
+        name: Network Drift and Remediation workflow
         description: >-
           Detect configuration drift, pause for human approval, then push the
           remediated configuration to the network devices.
@@ -29,9 +29,10 @@
 
           # On success of Drift detect, pause for a human to approve.
           - identifier: human-approval
-            approval_node:
+            unified_job_template:
               name: Human Approval
               description: Review detected drift before pushing config to devices.
+              type: workflow_approval
               timeout: 0
             related:
               success_nodes:
