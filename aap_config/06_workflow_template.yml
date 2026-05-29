@@ -6,14 +6,7 @@
   vars:
     aap_org: "{{ aap_organization | default('Red Hat network organization') }}"
   tasks:
-    # Remove the orphaned workflow from the original (mis-named) deploy.
-    # Safe to keep — no-op once the old workflow no longer exists.
-    - name: WT — Remove legacy 06_workflow_template
-      ansible.controller.workflow_job_template:
-        name: 06_workflow_template
-        organization: "{{ aap_org }}"
-        state: absent
-
+  
     - name: WT — Network drift detect and remediate
       ansible.controller.workflow_job_template:
         name: Network Drift and Remediation workflow
