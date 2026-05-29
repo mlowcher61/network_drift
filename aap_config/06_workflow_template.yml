@@ -1,0 +1,46 @@
+---
+- name: Create workflow template
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    aap_org: "{{ aap_organization | default('Red Hat network organization') }}"
+  tasks:
+    - name: WT — Network drift detect and remediate
+      ansible.controller.workflow_job_template:
+        name: 06_workflow_template
+        description: >-
+          Detect configuration drift, pause for human approval, then push the
+          remediated configuration to the network devices.
+        organization: "{{ aap_org }}"
+        inventory: Network Drift Inventory
+        ask_inventory_on_launch: false
+        workflow_nodes:
+          # Root node — always runs when the workflow is launched.
+          - identifier: drift-detect
+            unified_job_template:
+              name: Drift detect
+              type: job_template
+              organization:
+                name: "{{ aap_org }}"
+            related:
+              success_nodes:
+                - identifier: human-approval
+
+          # On success of Drift detect, pause for a human to approve.
+          - identifier: human-approval
+            approval_node:
+              name: Human Approval
+              description: Review detected drift before pushing config to devices.
+              timeout: 0
+            related:
+              success_nodes:
+                - identifier: push-config
+
+          # On approval, push the remediated config to the devices.
+          - identifier: push-config
+            unified_job_template:
+              name: Push Config
+              type: job_template
+              organization:
+                name: "{{ aap_org }}"

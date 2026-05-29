@@ -9,3 +9,4 @@
 - import_playbook: 03_inventory.yml
 - import_playbook: 04_execution_environment.yml
 - import_playbook: 05_job_templates.yml
+- import_playbook: 06_workflow_template.yml
