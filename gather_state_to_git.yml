@@ -1,0 +1,106 @@
+---
+# Gather the LIVE configuration off each router (as structured resource-module
+# data) and back it up into git under backups/<host>/<resource>.yaml.
+#
+# Design notes:
+#   * Play 1 fans out across all routers, gathers state, and writes one YAML
+#     file per resource. The gathered data uses the SAME schema as host_vars,
+#     so the backup files round-trip cleanly with push_config.yml / drift.yml.
+#   * Play 2 runs ONCE on localhost so a single commit contains every host's
+#     files instead of racing one commit per router.
+#   * The backups/ path is intentionally separate from host_vars/ — git stays
+#     the "desired state" source of truth; these files are an audit snapshot.
+
+- name: Gather live network state from devices
+  hosts: routers
+  gather_facts: false
+  vars:
+    resource:
+      - ntp_global
+      - logging_global
+      - snmp_server
+    backup_dir: "{{ playbook_dir }}/backups"
+
+  tasks:
+    - name: Gather live config for each resource module
+      ansible.netcommon.network_resource:
+        os_name: "{{ hostvars[inventory_hostname]['ansible_network_os'] }}"
+        name: "{{ resource_item }}"
+        state: gathered
+      loop: "{{ resource }}"
+      loop_control:
+        loop_var: resource_item
+      register: gathered_state
+
+    - name: Ensure per-host backup directory exists
+      ansible.builtin.file:
+        path: "{{ backup_dir }}/{{ inventory_hostname }}"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+
+    - name: Write each gathered resource to YAML (matches host_vars schema)
+      ansible.builtin.copy:
+        content: "{{ { item.resource_item: item.gathered } | to_nice_yaml(indent=4) }}"
+        dest: "{{ backup_dir }}/{{ inventory_hostname }}/{{ item.resource_item }}.yaml"
+        mode: "0644"
+      loop: "{{ gathered_state.results }}"
+      loop_control:
+        label: "{{ inventory_hostname }}/{{ item.resource_item }}.yaml"
+      delegate_to: localhost
+
+- name: Commit and push gathered state to git
+  hosts: localhost
+  gather_facts: true
+  run_once: true
+  vars:
+    # Override via extra_vars if you fork the repo.
+    git_repo_slug: mlowcher61/network_drift
+    git_branch: main
+
+  tasks:
+    - name: Stage backup files
+      ansible.builtin.command:
+        cmd: git add backups
+        chdir: "{{ playbook_dir }}"
+      changed_when: false
+
+    # `git diff --cached --quiet` exits 0 when nothing is staged, 1 when there
+    # are changes. failed_when:false so rc=1 doesn't abort the play.
+    - name: Detect whether state actually changed
+      ansible.builtin.command:
+        cmd: git diff --cached --quiet
+        chdir: "{{ playbook_dir }}"
+      register: git_staged
+      changed_when: false
+      failed_when: false
+
+    - name: Commit and push when state has changed
+      when: git_staged.rc == 1
+      block:
+        - name: Commit gathered state
+          ansible.builtin.command:
+            cmd: >-
+              git commit
+              -m "Backup network state {{ ansible_date_time.iso8601 }}
+              (AAP job {{ tower_job_id | default('local run') }})"
+            chdir: "{{ playbook_dir }}"
+          # Author/committer identity comes from the cred_github injectors
+          # (GIT_AUTHOR_NAME/EMAIL) in AAP, or local git config when run by hand.
+
+        - name: Push backups to GitHub
+          ansible.builtin.command:
+            cmd: >-
+              git push
+              https://x-access-token:{{ github_token }}@github.com/{{ git_repo_slug }}.git
+              HEAD:{{ git_branch }}
+            chdir: "{{ playbook_dir }}"
+          vars:
+            github_token: "{{ lookup('env', 'GITHUB_TOKEN') }}"
+          no_log: true   # never echo the token into job output
+
+    - name: Report a clean run (no drift to back up)
+      when: git_staged.rc == 0
+      ansible.builtin.debug:
+        msg: "No state changes to back up — working tree already matches the devices."
+...

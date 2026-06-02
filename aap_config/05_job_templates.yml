@@ -42,6 +42,22 @@
           state: overridden
           diffs: false
 
+    - name: JT — Gather state to git
+      ansible.controller.job_template:
+        name: Gather state to git
+        organization: "{{ aap_org }}"
+        project: network_drift
+        inventory: Network Drift Inventory
+        playbook: gather_state_to_git.yml
+        execution_environment: network_drift_ee
+        credentials:
+          - Workshop Credential
+          - cred_github
+        job_tags: ""
+        skip_tags: ""
+        extra_vars:
+          state: gathered
+
     - name: JT — Apply initial config to devices
       ansible.controller.job_template:
         name: Apply initial config to devices

@@ -31,7 +31,7 @@ network_drift/
 ├── collections/requirements.yml      # certified content (ansible.platform, cisco.ios, ...)
 ├── drift.yml                         # entry point — drift detect
 ├── push_config.yml                   # entry point — remediation
-├── gather_state_to_git.yml           # utility — refresh host_vars from devices
+├── gather_state_to_git.yml           # utility — snapshot live state to backups/ + push to git
 ├── host_vars/<router>/*.yaml         # source of truth (per-resource YAML)
 ├── roles/
 │   ├── ntp_global/                    # resource-module drift role
@@ -41,12 +41,12 @@ network_drift/
 │   └── update_incident/               # ServiceNow integration
 └── aap_config/                       # config-as-code (ansible.platform)
     ├── deploy_aap.yml                 # orchestrator (imports 00→05)
-    ├── 00_credential_types.yml        # servicenow custom credential type
-    ├── 01_credentials.yml             # cred_servicenow shell (PLACEHOLDER)
+    ├── 00_credential_types.yml        # servicenow + github_scm_write custom credential types
+    ├── 01_credentials.yml             # cred_servicenow + cred_github shells (PLACEHOLDER)
     ├── 02_project.yml                 # network_drift project
     ├── 03_inventory.yml               # clones Workshop Inventory + group vars
     ├── 04_execution_environment.yml   # registers network_drift_ee
-    └── 05_job_templates.yml           # Drift detect / Push Config / Apply initial
+    └── 05_job_templates.yml           # Drift detect / Push Config / Gather state to git / Apply initial
 ```
 
 ---
@@ -71,12 +71,12 @@ in AAP itself. What the bootstrap creates:
 
 | Object | Name |
 |---|---|
-| Credential type | `servicenow` |
-| Credential (shell) | `cred_servicenow` |
+| Credential types | `servicenow`, `github_scm_write` |
+| Credentials (shell) | `cred_servicenow`, `cred_github` |
 | Project | `network_drift` (SCM = this repo) |
 | Inventory | `Network Drift Inventory` (clone of Workshop Inventory) |
 | Execution environment | `network_drift_ee` (`quay.io/locust61/network-ee:02`) |
-| Job templates | `Drift detect`, `Push Config`, `Apply initial config to devices` |
+| Job templates | `Drift detect`, `Push Config`, `Gather state to git`, `Apply initial config to devices` |
 | Workflow template | `Network Drift and Remediation workflow` |
 
 ---
@@ -93,11 +93,32 @@ in AAP itself. What the bootstrap creates:
 
 ---
 
-## Updating the source of truth
+## Backing up live state to git
 
-`gather_state_to_git.yml` is a developer utility that re-reads resource state
-from every router and writes it back into `host_vars/`. Edit the `repo_root`
-variable at the top before running it locally.
+`gather_state_to_git.yml` snapshots the **live** configuration off every router
+and commits it to git as an audit trail — it does **not** touch `host_vars/`, so
+git stays the desired-state source of truth.
+
+What it does:
+
+1. Gathers `ntp_global`, `logging_global`, and `snmp_server` from each device in
+   `gathered` state (same schema as `host_vars/`).
+2. Writes one file per resource to `backups/<router>/<resource>.yaml`.
+3. Commits and pushes to GitHub **only when something changed** — a clean run
+   reports "no changes" instead of creating an empty commit.
+
+The commit/push step needs the **`cred_github`** credential attached to the
+`Gather state to git` job template. It injects:
+
+| Field | Purpose |
+|---|---|
+| `GITHUB_TOKEN` | PAT (repo scope) — used in the push URL, never logged |
+| `GIT_AUTHOR_NAME` / `GIT_AUTHOR_EMAIL` | Commit attribution (also set as committer) |
+
+Run it on a schedule (e.g. nightly) for a rolling history of device state, or
+on demand before a change window. To run locally, ensure `GITHUB_TOKEN` is set
+in your environment; author/committer identity falls back to your local git
+config. Override `git_repo_slug` / `git_branch` via extra vars if you fork.
 
 ---
 
