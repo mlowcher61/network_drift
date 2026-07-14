@@ -12,7 +12,7 @@
 #     the "desired state" source of truth; these files are an audit snapshot.
 
 - name: Gather live network state from devices
-  hosts: routers
+  hosts: network
   gather_facts: false
   vars:
     resource:

@@ -1,6 +1,6 @@
 ---
 - name: Drift Check for Router settings
-  hosts: routers
+  hosts: network
   gather_facts: false
   vars:
    resource: 

@@ -1,6 +1,6 @@
 ---
 - name: Getting ready to apply fixes
-  hosts: routers
+  hosts: network
   gather_facts: false
   vars:
    resource: 
