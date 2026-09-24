@@ -12,6 +12,10 @@
 #   ansible.builtin.debug:
 #     var: ntp_diff  # ntp_diff.results
 
+- name: Debug NTP variables
+  ansible.builtin.debug:
+    var: ntp_diff
+
 - ansible.utils.fact_diff:
     before: "{{ ntp_diff.before }}"
     after: "{{ hostvars[inventory_hostname]['ntp_global'] }}"
